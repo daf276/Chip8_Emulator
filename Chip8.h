@@ -17,6 +17,7 @@ namespace Emulator {
         unsigned short opcode;
 
         std::vector<void (Chip8::*)()> opcode_table;
+        std::vector<void (Chip8::*)()> opcode8_table;
 
         std::vector<unsigned char> memory; //4096 bits of memory
         std::vector<unsigned char> v; //CPU registers named V0 to VE, last register is the carry flag
@@ -29,8 +30,10 @@ namespace Emulator {
         unsigned char delay_timer;
         unsigned char sound_timer;
 
-        void PopulateOpCodeTable();
+        void PopulateOpCodeTables();
 
+        //Functions for the opcodes
+        void OpCodeInvalid();
         void OpCodeZero();
         void Call();
         void Jump();
@@ -49,6 +52,18 @@ namespace Emulator {
         void DisplaySprite();
         void OpCodeE();
         void OpCodeF();
+
+        //Functions for opcodes with 8XXX
+        void StoreRegisterYInX();
+        void ORRegisterXAndY();
+        void ANDRegisterXAndY();
+        void XORRegisterXAndY();
+        void ADDRegisterXAndY();
+        void SUBRegisterXAndY();
+        void SHRRegisterX();
+        void SUBNRegisterXAndY();
+        void SHLRegisterX();
+
     public:
         Chip8(std::string path);
 

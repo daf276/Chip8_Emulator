@@ -13,8 +13,8 @@ namespace Emulator {
     static std::mt19937 mt(rd());
     static std::uniform_real_distribution<double> dist(0.0, 255.0);
 
-    Chip8::Chip8(std::string path) : memory(4096), v(16), stack(16), opcode_table(17) {
-        PopulateOpCodeTable();
+    Chip8::Chip8(std::string path) : memory(4096), v(16), stack(16) {
+        PopulateOpCodeTables();
 
         program_counter = 0x200;
 
@@ -29,9 +29,10 @@ namespace Emulator {
             }
 
             inputfile.close();
-        } else {
+        } else if(path == "Unit Test, supress error"){
+            //Used to supress the cant find inputfile error while unit testing
+        } else
             std::cerr << std::string("Can't find inputfile") << path << std::endl;
-        }
     }
 
     void Chip8::EmulateCycle() {
@@ -41,11 +42,22 @@ namespace Emulator {
         (this->*opcode_table[(opcode & 0xF000) >> 12])();
     }
 
-    void Chip8::PopulateOpCodeTable() { //Array with opcodes in the form of index of array == first 4 bits of opcode
+    void Chip8::PopulateOpCodeTables() { //Array with opcodes in the form of index of array == first 4 bits of opcode
         opcode_table = {&Chip8::OpCodeZero, &Chip8::Jump, &Chip8::Call, &Chip8::RegisterAndConstantSE,
                         &Chip8::RegisterAndConstantSNE, &Chip8::TwoRegistersSE, &Chip8::LoadConstantIntoRegister,
                         &Chip8::AddConstantToRegister, &Chip8::OpCodeEight, &Chip8::TwoRegistersSNE,
-                        &Chip8::SetRegisterIToConstant, &Chip8::JumpToConstantPlusV0, &Chip8::SetCpuRegisterRandom, &Chip8::DisplaySprite, &Chip8::OpCodeE, & Chip8::OpCodeF};
+                        &Chip8::SetRegisterIToConstant, &Chip8::JumpToConstantPlusV0, &Chip8::SetCpuRegisterRandom,
+                        &Chip8::DisplaySprite, &Chip8::OpCodeE, &Chip8::OpCodeF};
+
+        opcode8_table = {&Chip8::StoreRegisterYInX, &Chip8::ORRegisterXAndY, &Chip8::ANDRegisterXAndY,
+                         &Chip8::XORRegisterXAndY, &Chip8::ADDRegisterXAndY, &Chip8::SUBRegisterXAndY,
+                         &Chip8::SHRRegisterX, &Chip8::SUBNRegisterXAndY, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid,
+                         &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid,
+                         &Chip8::SHLRegisterX, &Chip8::OpCodeInvalid};
+    }
+
+    void Chip8::OpCodeInvalid() {//Opcodes 0XXX
+        std::cerr << "Invalid opcode" << std::endl;
     }
 
     void Chip8::OpCodeZero() {//Opcodes 0XXX
@@ -97,54 +109,54 @@ namespace Emulator {
     }
 
     void Chip8::AddConstantToRegister() { //Opcode 7XXX -> ADD Vx, byte
-        int current_register = (opcode & 0x0F00) >> 8;
-        v[current_register] += static_cast<unsigned char>(opcode); //Casting gives the 2 LSBs, aka the constant
+        v[(opcode & 0x0F00) >> 8] += static_cast<unsigned char>(opcode); //Casting gives the 2 LSBs, aka the constant
         SetPCToNextInstruction();
     }
 
-    void Chip8::OpCodeEight() {
-        int register_x = (opcode & 0x0F00) >> 8;
-        int register_y = (opcode & 0x00F0) >> 4;
-        unsigned char value_x = v[register_x];
-        unsigned char value_y = v[register_y];
-
-        switch (opcode & 0xF) {
-            case 0: //LD
-                v[register_x] = value_y;
-                break;
-            case 1: //OR
-                v[register_x] = value_x | value_y;
-                break;
-            case 2: //AND
-                v[register_x] = value_x & value_y;
-                break;
-            case 3: //XOR
-                v[register_x] = value_x ^ value_y;
-                break;
-            case 4: //ADD
-                v[register_x] = value_x + value_y;
-                v[15] = static_cast<unsigned char>((value_x | value_y > 255) ? 1 : 0);
-                break;
-            case 5: //SUB
-                v[register_x] = value_x - value_y;
-                v[15] = static_cast<unsigned char>((value_x > value_y) ? 1 : 0);
-                break;
-            case 6: //SHR
-                v[register_x] /= 2;
-                v[15] = static_cast<unsigned char>(value_x & 0b1);
-                break;
-            case 7: //SUBN
-                v[register_x] = value_y - value_x;
-                v[15] = static_cast<unsigned char>((value_y > value_x) ? 1 : 0);
-                break;
-            case 0xE: //SHL
-                v[register_x] *= 2;
-                v[15] = static_cast<unsigned char>((value_x & 0b10000000) >> 7);
-                break;
-            default:
-                std::cerr << "opcode not in specification" << std::endl;
-        }
+    void Chip8::OpCodeEight() { //All Opcodes in the form of 8XXX
+        (this->*opcode8_table[opcode & 0x000F])();
         SetPCToNextInstruction();
+    }
+
+    void Chip8::StoreRegisterYInX() { //opcode 8XX0 -> LD Vx, Vy
+        v[(opcode & 0x0F00) >> 8] = v[(opcode & 0x00F0) >> 4];
+    }
+
+    void Chip8::ORRegisterXAndY() { //opcode 8XX1 -> OR Vx, Vy
+        v[(opcode & 0x0F00) >> 8] = v[(opcode & 0x0F00) >> 8] | v[(opcode & 0x00F0) >> 4];
+    }
+
+    void Chip8::ANDRegisterXAndY() { //opcode 8XX2 -> AND Vx, Vy
+        v[(opcode & 0x0F00) >> 8] = v[(opcode & 0x0F00) >> 8] & v[(opcode & 0x00F0) >> 4];
+    }
+
+    void Chip8::XORRegisterXAndY() { //opcode 8XX3 -> XOR Vx, Vy
+        v[(opcode & 0x0F00) >> 8] = v[(opcode & 0x0F00) >> 8] ^ v[(opcode & 0x00F0) >> 4];
+    }
+
+    void Chip8::ADDRegisterXAndY() { //opcode 8XX4 -> AND Vx, Vy
+        v[15] = static_cast<unsigned char>((v[(opcode & 0x0F00) >> 8] + v[(opcode & 0x00F0) >> 4] > 255) ? 1 : 0);
+        v[(opcode & 0x0F00) >> 8] = v[(opcode & 0x0F00) >> 8] + v[(opcode & 0x00F0) >> 4];
+    }
+
+    void Chip8::SUBRegisterXAndY() { //opcode 8XX5 -> SUB Vx, Vy
+        v[15] = static_cast<unsigned char>((v[(opcode & 0x0F00) >> 8] > v[(opcode & 0x00F0) >> 4]) ? 1 : 0);
+        v[(opcode & 0x0F00) >> 8] = v[(opcode & 0x0F00) >> 8] - v[(opcode & 0x00F0) >> 4];
+    }
+
+    void Chip8::SHRRegisterX() { //opcode 8XX6 -> SHR Vx {, Vy}
+        v[15] = static_cast<unsigned char>(v[(opcode & 0x0F00) >> 8] & 0b1);
+        v[(opcode & 0x0F00) >> 8] /= 2;
+    }
+
+    void Chip8::SUBNRegisterXAndY() { //opcode 8XX7 -> SUBN Vx, Vy
+        v[15] = static_cast<unsigned char>(v[(opcode & 0x00F0) >> 4] > (v[(opcode & 0x0F00) >> 8]) ? 1 : 0);
+        v[(opcode & 0x0F00) >> 8] = v[(opcode & 0x00F0) >> 4] - v[(opcode & 0x0F00) >> 8];
+    }
+
+    void Chip8::SHLRegisterX() { //opcode 8XXE -> SHL Vx {, Vy}
+        v[15] = static_cast<unsigned char>((v[(opcode & 0x0F00) >> 8] & 0b10000000) >> 7);
+        v[(opcode & 0x0F00) >> 8] *= 2;
     }
 
     void Chip8::TwoRegistersSNE() { //Opcode 9XXX -> SNE Vx, Vy
@@ -164,7 +176,8 @@ namespace Emulator {
     }
 
     void Chip8::SetCpuRegisterRandom() { //Opcode CXXX -> RND Vx, byte
-        v[(opcode & 0x0F00) >> 8] = static_cast<unsigned char>((0x00FF & opcode)) & static_cast<unsigned char>(dist(mt));
+        v[(opcode & 0x0F00) >> 8] =
+                static_cast<unsigned char>((0x00FF & opcode)) & static_cast<unsigned char>(dist(mt));
         SetPCToNextInstruction();
     }
 
