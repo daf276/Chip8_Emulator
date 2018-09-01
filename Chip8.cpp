@@ -92,14 +92,13 @@ namespace Emulator {
     }
 
     void Chip8::LoadConstantIntoRegister() { //Opcode 6XXX -> LD Vx, byte
-        v[(opcode & 0x0F00)
-                >> 8] = static_cast<unsigned char>(opcode); //Casting gives us the 2 LSBs, which represent the constant
+        v[(opcode & 0x0F00) >> 8] = static_cast<unsigned char>(opcode); //Casting gives the 2 LSBs, aka the constant
         SetPCToNextInstruction();
     }
 
     void Chip8::AddConstantToRegister() { //Opcode 7XXX -> ADD Vx, byte
         int current_register = (opcode & 0x0F00) >> 8;
-        v[current_register] += static_cast<unsigned char>(opcode); //Casting gives us the 2 LSBs, which represent the constant
+        v[current_register] += static_cast<unsigned char>(opcode); //Casting gives the 2 LSBs, aka the constant
         SetPCToNextInstruction();
     }
 
