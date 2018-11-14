@@ -13,9 +13,10 @@ namespace Emulator {
     static std::mt19937 mt(rd());
     static std::uniform_real_distribution<double> dist(0.0, 255.0);
 
-    Chip8::Chip8(std::string path) : memory(4096), v(16), stack(16) {
+    Chip8::Chip8(std::string path, int* screen_buffer) : memory(4096), v(16), stack(16), keys_pressed(16) {
         PopulateOpCodeTables();
 
+        display_pixels = screen_buffer;
         program_counter = 0x200;
 
         std::ifstream inputfile;
@@ -182,13 +183,32 @@ namespace Emulator {
     }
 
     void Chip8::DisplaySprite() { //Opcode DXXX -> DRW Vx, Vy, nibble
-        //TODO
+        unsigned char number_of_bytes = static_cast<unsigned char>(opcode & 0x000F);
+        unsigned char x = v[(opcode & 0x0F00) >> 8];
+        unsigned char y = v[(opcode & 0x00F0) >> 4];
+        
+        for (int i = 0; i < number_of_bytes; ++i) {
+            unsigned char row_of_pixels = memory[index_register+i];
+
+            display_pixels[64*(y+i)+x] = (row_of_pixels & 128) > 0 ? 255 : 0;
+            display_pixels[64*(y+i)+x+1] = (row_of_pixels & 64) > 0 ? 255 : 0;
+            display_pixels[64*(y+i)+x+2] = (row_of_pixels & 32) > 0 ? 255 : 0;
+            display_pixels[64*(y+i)+x+3] = (row_of_pixels & 16) > 0 ? 255 : 0;
+            display_pixels[64*(y+i)+x+4] = (row_of_pixels & 8) > 0 ? 255 : 0;
+            display_pixels[64*(y+i)+x+5] = (row_of_pixels & 4) > 0 ? 255 : 0;
+            display_pixels[64*(y+i)+x+6] = (row_of_pixels & 2) > 0 ? 255 : 0;
+            display_pixels[64*(y+i)+x+7] = (row_of_pixels & 1) > 0 ? 255 : 0;
+        }
+
         SetPCToNextInstruction();
     }
 
     void Chip8::OpCodeE() {
-        //TODO
-        SetPCToNextInstruction();
+        if((opcode & 0x00FF) == 0x009E){
+            int button = (opcode & 0x0F00) >> 8;
+        } else if ((opcode & 0x00FF) == 0x00A1){
+            SetPCToNextInstruction();
+        }
     }
 
     void Chip8::OpCodeF() {

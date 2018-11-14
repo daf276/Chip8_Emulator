@@ -11,10 +11,16 @@
 
 namespace Emulator {
 
+    enum KeyPressed{Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, A, B, C, D, E, F};
+
     class Chip8 {
 
     private:
         unsigned short opcode;
+
+        int * display_pixels;
+
+        std::vector<KeyPressed> keys_pressed;
 
         std::vector<void (Chip8::*)()> opcode_table;
         std::vector<void (Chip8::*)()> opcode8_table;
@@ -65,7 +71,7 @@ namespace Emulator {
         void SHLRegisterX();
 
     public:
-        Chip8(std::string path);
+        Chip8(std::string path, int* screen_buffer);
 
         void EmulateCycle();
 
