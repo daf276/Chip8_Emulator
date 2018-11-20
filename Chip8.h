@@ -11,8 +11,6 @@
 
 namespace Emulator {
 
-    enum KeyPressed{Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, A, B, C, D, E, F};
-
     class Chip8 {
 
     private:
@@ -20,10 +18,9 @@ namespace Emulator {
 
         int * display_pixels;
 
-        std::vector<KeyPressed> keys_pressed;
-
         std::vector<void (Chip8::*)()> opcode_table;
         std::vector<void (Chip8::*)()> opcode8_table;
+        std::vector<void (Chip8::*)()> opcodeF_table;
 
         std::vector<unsigned char> memory; //4096 bits of memory
         std::vector<unsigned char> v; //CPU registers named V0 to VE, last register is the carry flag
@@ -70,11 +67,17 @@ namespace Emulator {
         void SUBNRegisterXAndY();
         void SHLRegisterX();
 
+        //Functions for opcodes with FXXX
+        void OpCodeFx0x();
+
     public:
         Chip8(std::string path, int* screen_buffer);
 
+        std::vector<bool> key_pressed;
+
         void EmulateCycle();
 
+        void SetDelayTimer(unsigned char timer);
         void SetCpuRegister(int index, unsigned char value);
         unsigned char GetCpuRegister(int i);
         unsigned short GetStack(int i);

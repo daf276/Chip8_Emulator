@@ -6,6 +6,7 @@
 #include <fstream>
 #include "Chip8.h"
 #include <random>
+#include <algorithm>
 
 namespace Emulator {
 
@@ -13,7 +14,7 @@ namespace Emulator {
     static std::mt19937 mt(rd());
     static std::uniform_real_distribution<double> dist(0.0, 255.0);
 
-    Chip8::Chip8(std::string path, int* screen_buffer) : memory(4096), v(16), stack(16), keys_pressed(16) {
+    Chip8::Chip8(std::string path, int *screen_buffer) : memory(4096), v(16), stack(16), key_pressed(16) {
         PopulateOpCodeTables();
 
         display_pixels = screen_buffer;
@@ -30,7 +31,7 @@ namespace Emulator {
             }
 
             inputfile.close();
-        } else if(path == "Unit Test, supress error"){
+        } else if (path == "Unit Test, supress error") {
             //Used to supress the cant find inputfile error while unit testing
         } else
             std::cerr << std::string("Can't find inputfile") << path << std::endl;
@@ -55,6 +56,7 @@ namespace Emulator {
                          &Chip8::SHRRegisterX, &Chip8::SUBNRegisterXAndY, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid,
                          &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid,
                          &Chip8::SHLRegisterX, &Chip8::OpCodeInvalid};
+        opcodeF_table = {&Chip8::OpCodeFx0x, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid};
     }
 
     void Chip8::OpCodeInvalid() {//Opcodes 0XXX
@@ -186,34 +188,45 @@ namespace Emulator {
         unsigned char number_of_bytes = static_cast<unsigned char>(opcode & 0x000F);
         unsigned char x = v[(opcode & 0x0F00) >> 8];
         unsigned char y = v[(opcode & 0x00F0) >> 4];
-        
-        for (int i = 0; i < number_of_bytes; ++i) {
-            unsigned char row_of_pixels = memory[index_register+i];
 
-            display_pixels[64*(y+i)+x] = (row_of_pixels & 128) > 0 ? 255 : 0;
-            display_pixels[64*(y+i)+x+1] = (row_of_pixels & 64) > 0 ? 255 : 0;
-            display_pixels[64*(y+i)+x+2] = (row_of_pixels & 32) > 0 ? 255 : 0;
-            display_pixels[64*(y+i)+x+3] = (row_of_pixels & 16) > 0 ? 255 : 0;
-            display_pixels[64*(y+i)+x+4] = (row_of_pixels & 8) > 0 ? 255 : 0;
-            display_pixels[64*(y+i)+x+5] = (row_of_pixels & 4) > 0 ? 255 : 0;
-            display_pixels[64*(y+i)+x+6] = (row_of_pixels & 2) > 0 ? 255 : 0;
-            display_pixels[64*(y+i)+x+7] = (row_of_pixels & 1) > 0 ? 255 : 0;
+        for (int i = 0; i < number_of_bytes; ++i) {
+            unsigned char row_of_pixels = memory[index_register + i];
+
+            display_pixels[64 * (y + i) + x] ^= (row_of_pixels & 128) > 0 ? 255 : 0;
+            display_pixels[64 * (y + i) + x + 1] ^= (row_of_pixels & 64) > 0 ? 255 : 0;
+            display_pixels[64 * (y + i) + x + 2] ^= (row_of_pixels & 32) > 0 ? 255 : 0;
+            display_pixels[64 * (y + i) + x + 3] ^= (row_of_pixels & 16) > 0 ? 255 : 0;
+            display_pixels[64 * (y + i) + x + 4] ^= (row_of_pixels & 8) > 0 ? 255 : 0;
+            display_pixels[64 * (y + i) + x + 5] ^= (row_of_pixels & 4) > 0 ? 255 : 0;
+            display_pixels[64 * (y + i) + x + 6] ^= (row_of_pixels & 2) > 0 ? 255 : 0;
+            display_pixels[64 * (y + i) + x + 7] ^= (row_of_pixels & 1) > 0 ? 255 : 0;
         }
 
         SetPCToNextInstruction();
     }
 
-    void Chip8::OpCodeE() {
-        if((opcode & 0x00FF) == 0x009E){
-            int button = (opcode & 0x0F00) >> 8;
-        } else if ((opcode & 0x00FF) == 0x00A1){
-            SetPCToNextInstruction();
+    void Chip8::OpCodeE() { //Skip next instruction depending on key state
+        if ((opcode & 0x00FF) == 0x009E) { //SKP Vx
+            if(key_pressed[(opcode & 0x0F00) >> 8]) SetPCToSkipNextInstruction();
+            else SetPCToNextInstruction();
+        } else if ((opcode & 0x00FF) == 0x00A1) { //SKNP Vx
+            if(!key_pressed[(opcode & 0x0F00) >> 8]) SetPCToSkipNextInstruction();
+            else SetPCToNextInstruction();
         }
     }
 
     void Chip8::OpCodeF() {
-        //TODO
-        SetPCToNextInstruction();
+        (this->*opcodeF_table[(opcode & 0x00F0) >> 4])();
+    }
+
+    void Chip8::OpCodeFx0x() {
+        if ((opcode & 0x000F) == 0x7) {
+            v[(opcode & 0x0F00) >> 8] = delay_timer;
+        } else if ((opcode & 0x000F) == 0xA) {
+            if (std::any_of(key_pressed.begin(), key_pressed.end(), [](bool i) { return i; })) {
+                SetPCToNextInstruction();
+            }
+        }
     }
 
     void Chip8::SetPCToNextInstruction() {
@@ -222,6 +235,10 @@ namespace Emulator {
 
     void Chip8::SetPCToSkipNextInstruction() {
         program_counter += 4;
+    }
+
+    void Chip8::SetDelayTimer(unsigned char timer){
+        delay_timer = timer;
     }
 
     void Chip8::SetCpuRegister(int index, unsigned char value) {

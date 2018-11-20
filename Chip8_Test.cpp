@@ -353,18 +353,59 @@ TEST_CASE("jump to V0 plus constant") {
 
 TEST_CASE("Skip instruction if key is pressed") {
     Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
-    parenttest.WriteToMemory(0x200, 0xE0);
+    parenttest.WriteToMemory(0x200, 0xE5);
     parenttest.WriteToMemory(0x201, 0x9E);
 
+    parenttest.key_pressed[5] = true;
     parenttest.EmulateCycle();
 
-    REQUIRE(0x202 == parenttest.GetProgramCounter());
+    REQUIRE(0x204 == parenttest.GetProgramCounter());
+
+    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    parenttest2.WriteToMemory(0x200, 0xE5);
+    parenttest2.WriteToMemory(0x201, 0x9E);
+
+    parenttest2.key_pressed[5] = false;
+    parenttest2.EmulateCycle();
+
+    REQUIRE(0x202 == parenttest2.GetProgramCounter());
 }
 
 TEST_CASE("Skip instruction if key is not pressed") {
     Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
-    parenttest.WriteToMemory(0x200, 0xE0);
+    parenttest.WriteToMemory(0x200, 0xE5);
     parenttest.WriteToMemory(0x201, 0xA1);
+
+    parenttest.key_pressed[5] = false;
+    parenttest.EmulateCycle();
+
+    REQUIRE(0x204 == parenttest.GetProgramCounter());
+
+    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    parenttest2.WriteToMemory(0x200, 0xE5);
+    parenttest2.WriteToMemory(0x201, 0xA1);
+
+    parenttest2.key_pressed[5] = true;
+    parenttest2.EmulateCycle();
+
+    REQUIRE(0x202 == parenttest2.GetProgramCounter());
+}
+
+TEST_CASE("Load delay timer into register") {
+    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    parenttest.WriteToMemory(0x200, 0xF0);
+    parenttest.WriteToMemory(0x201, 0x07);
+    parenttest.SetDelayTimer(5);
+
+    parenttest.EmulateCycle();
+
+    REQUIRE(parenttest.GetCpuRegister(0) == 5);
+}
+
+TEST_CASE("Go to next instruction if any key is pressed") {
+    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    parenttest.WriteToMemory(0x200, 0xF0);
+    parenttest.WriteToMemory(0x201, 0x01);
 
     parenttest.EmulateCycle();
 
