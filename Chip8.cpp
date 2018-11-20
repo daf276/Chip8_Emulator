@@ -56,7 +56,7 @@ namespace Emulator {
                          &Chip8::SHRRegisterX, &Chip8::SUBNRegisterXAndY, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid,
                          &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid,
                          &Chip8::SHLRegisterX, &Chip8::OpCodeInvalid};
-        opcodeF_table = {&Chip8::OpCodeFx0x, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid};
+        opcodeF_table = {&Chip8::OpCodeFx0x, &Chip8::OpCodeFx1x, &Chip8::OpCodeInvalid};
     }
 
     void Chip8::OpCodeInvalid() {//Opcodes 0XXX
@@ -207,10 +207,10 @@ namespace Emulator {
 
     void Chip8::OpCodeE() { //Skip next instruction depending on key state
         if ((opcode & 0x00FF) == 0x009E) { //SKP Vx
-            if(key_pressed[(opcode & 0x0F00) >> 8]) SetPCToSkipNextInstruction();
+            if (key_pressed[(opcode & 0x0F00) >> 8]) SetPCToSkipNextInstruction();
             else SetPCToNextInstruction();
         } else if ((opcode & 0x00FF) == 0x00A1) { //SKNP Vx
-            if(!key_pressed[(opcode & 0x0F00) >> 8]) SetPCToSkipNextInstruction();
+            if (!key_pressed[(opcode & 0x0F00) >> 8]) SetPCToSkipNextInstruction();
             else SetPCToNextInstruction();
         }
     }
@@ -220,13 +220,25 @@ namespace Emulator {
     }
 
     void Chip8::OpCodeFx0x() {
-        if ((opcode & 0x000F) == 0x7) {
+        if ((opcode & 0x000F) == 0x7) { //LD Vx, DT
             v[(opcode & 0x0F00) >> 8] = delay_timer;
-        } else if ((opcode & 0x000F) == 0xA) {
+            SetPCToNextInstruction();
+        } else if ((opcode & 0x000F) == 0xA) { //LD Vx, K
             if (std::any_of(key_pressed.begin(), key_pressed.end(), [](bool i) { return i; })) {
                 SetPCToNextInstruction();
             }
         }
+    }
+
+    void Chip8::OpCodeFx1x() {
+        if ((opcode & 0x000F) == 0x5) { //LD DT, Vx
+            delay_timer = v[(opcode & 0x0F00) >> 8];
+        } else if ((opcode & 0x000F) == 0x8) { //LD ST, Vx
+            sound_timer = v[(opcode & 0x0F00) >> 8];
+        } else if ((opcode & 0x000F) == 0xE) { //ADD I, Vx
+            index_register += v[(opcode & 0x0F00) >> 8];
+        }
+        SetPCToNextInstruction();
     }
 
     void Chip8::SetPCToNextInstruction() {
@@ -237,9 +249,13 @@ namespace Emulator {
         program_counter += 4;
     }
 
-    void Chip8::SetDelayTimer(unsigned char timer){
+    void Chip8::SetDelayTimer(unsigned char timer) {
         delay_timer = timer;
     }
+
+    unsigned char Chip8::GetDelayTimer() { return delay_timer; }
+
+    unsigned char Chip8::GetSoundTimer() { return sound_timer; }
 
     void Chip8::SetCpuRegister(int index, unsigned char value) {
         v[index] = value;
@@ -268,4 +284,6 @@ namespace Emulator {
     unsigned short Chip8::GetIndexRegister() {
         return index_register;
     }
+
+    void Chip8::SetIndexRegister(unsigned short i) { index_register = i; }
 }

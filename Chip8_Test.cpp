@@ -402,6 +402,40 @@ TEST_CASE("Load delay timer into register") {
     REQUIRE(parenttest.GetCpuRegister(0) == 5);
 }
 
+TEST_CASE("Load register into delay timer") {
+    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    parenttest.WriteToMemory(0x200, 0xF5);
+    parenttest.WriteToMemory(0x201, 0x15);
+    parenttest.SetCpuRegister(5,12);
+
+    parenttest.EmulateCycle();
+
+    REQUIRE(parenttest.GetDelayTimer() == 12);
+}
+
+TEST_CASE("Load register into sound timer") {
+    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    parenttest.WriteToMemory(0x200, 0xF5);
+    parenttest.WriteToMemory(0x201, 0x18);
+    parenttest.SetCpuRegister(5,12);
+
+    parenttest.EmulateCycle();
+
+    REQUIRE(parenttest.GetSoundTimer() == 12);
+}
+
+TEST_CASE("Set index register equal to index register + register x") {
+    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    parenttest.WriteToMemory(0x200, 0xF5);
+    parenttest.WriteToMemory(0x201, 0x1E);
+    parenttest.SetCpuRegister(5,12);
+    parenttest.SetIndexRegister(22);
+
+    parenttest.EmulateCycle();
+
+    REQUIRE(parenttest.GetIndexRegister() == 34);
+}
+
 TEST_CASE("Go to next instruction if any key is pressed") {
     Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
     parenttest.WriteToMemory(0x200, 0xF0);

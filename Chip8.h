@@ -69,6 +69,8 @@ namespace Emulator {
 
         //Functions for opcodes with FXXX
         void OpCodeFx0x();
+        void OpCodeFx1x();
+
 
     public:
         Chip8(std::string path, int* screen_buffer);
@@ -78,11 +80,14 @@ namespace Emulator {
         void EmulateCycle();
 
         void SetDelayTimer(unsigned char timer);
+        unsigned char GetDelayTimer();
+        unsigned char GetSoundTimer();
         void SetCpuRegister(int index, unsigned char value);
         unsigned char GetCpuRegister(int i);
         unsigned short GetStack(int i);
         unsigned char GetStackPointer();
         unsigned short GetProgramCounter();
+        void SetIndexRegister(unsigned short i);
         unsigned short GetIndexRegister();
         void WriteToMemory(int index, unsigned char value);
     };
