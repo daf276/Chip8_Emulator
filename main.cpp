@@ -38,17 +38,14 @@ int main(int argc, char const *argv[]) {
         //Event handler
         SDL_Event e;
 
-        SDL_Texture * texture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGB332, SDL_TEXTUREACCESS_STATIC, 64, 32);
+        uint32_t pixels[64*32];
 
-        auto * pixels = new int[64*32];
-        memset(pixels, 0, 64*32* sizeof(int));
+        SDL_Texture * texture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, 64, 32);
 
         Emulator::Chip8 chip8("../PONG");
 
         //While application is running
         while (!quit) {
-
-            SDL_UpdateTexture(texture, NULL, pixels, 64 * sizeof(int));
 
             //Handle events on queue
             while (SDL_PollEvent(&e) != 0) {
@@ -61,6 +58,15 @@ int main(int argc, char const *argv[]) {
 
             chip8.EmulateCycle();
 
+            std::vector<bool> gfx = chip8.GetGfx();
+
+            for (int i = 0; i < 2048; ++i) {
+                uint32_t pixel = gfx[i];
+                pixels[i] = (0x00FFFFFF * pixel) | 0xFF000000;
+            }
+
+            SDL_UpdateTexture(texture, NULL, pixels, 64 * sizeof(int));
+
             SDL_RenderClear(gRenderer);
 
             SDL_RenderCopy(gRenderer, texture, NULL, NULL);
@@ -71,7 +77,6 @@ int main(int argc, char const *argv[]) {
             SDL_UpdateWindowSurface(gWindow);
         }
 
-        delete[] pixels;
         SDL_DestroyTexture(texture);
         SDL_DestroyRenderer(gRenderer);
 

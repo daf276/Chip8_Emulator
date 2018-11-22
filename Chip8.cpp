@@ -21,7 +21,7 @@ namespace Emulator {
         if (inputfile.is_open()) {
             int counter = 0x200;
             while (!inputfile.eof()) {
-                inputfile >> memory.at(counter);
+                memory.at(counter) = inputfile.get();
                 counter++;
             }
 
@@ -204,11 +204,6 @@ namespace Emulator {
             gfx[64 * (y + i) + x + 7] = ((row_of_pixels & 1) > 0) ^ gfx[64 * (y + i) + x + 7];
         }
 
-        //std::cout << static_cast<int>(y) << std::endl;
-        for (int j = 0; j < 64*32; ++j) {
-            //if(gfx[j]) display_pixels[j] = 255;
-            //else display_pixels[j] = 0;
-        }
         SetPCToNextInstruction();
     }
 
@@ -443,5 +438,13 @@ namespace Emulator {
 
     void Chip8::SetSoundTimer(unsigned char sound_timer) {
         Chip8::sound_timer = sound_timer;
+    }
+
+    const std::vector<bool> &Chip8::GetGfx() const {
+        return gfx;
+    }
+
+    void Chip8::SetGfx(const std::vector<bool> &gfx) {
+        Chip8::gfx = gfx;
     }
 }
