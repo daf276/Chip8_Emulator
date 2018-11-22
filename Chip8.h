@@ -8,23 +8,26 @@
 #include <string>
 #include <vector>
 #include <random>
+#include <memory>
 
 namespace Emulator {
 
     class Chip8 {
 
     private:
-        unsigned short opcode;
-
-        int * display_pixels;
+        std::unique_ptr<std::mt19937> mt;
+        std::unique_ptr<std::uniform_real_distribution<double>> dist;
 
         std::vector<void (Chip8::*)()> opcode_table;
         std::vector<void (Chip8::*)()> opcode8_table;
         std::vector<void (Chip8::*)()> opcodeF_table;
 
+        std::vector<bool> gfx;
         std::vector<unsigned char> memory; //4096 bits of memory
         std::vector<unsigned char> v; //CPU registers named V0 to VE, last register is the carry flag
         std::vector<unsigned short> stack; //16 Stacklevels
+
+        unsigned short opcode;
 
         unsigned short index_register;
         unsigned short program_counter;
@@ -34,6 +37,7 @@ namespace Emulator {
         unsigned char sound_timer;
 
         void PopulateOpCodeTables();
+        void LoadHexDigitSpriteIntoMemory();
 
         //Functions for the opcodes
         void OpCodeInvalid();
@@ -70,25 +74,32 @@ namespace Emulator {
         //Functions for opcodes with FXXX
         void OpCodeFx0x();
         void OpCodeFx1x();
-
+        void LoadFontLocationIntoIndexRegister();
+        void OpCodeFx3x();
+        void OpCodeFx5x();
+        void OpCodeFx6x();
 
     public:
-        Chip8(std::string path, int* screen_buffer);
+        Chip8();
+        explicit Chip8(std::string path);
 
         std::vector<bool> key_pressed;
 
         void EmulateCycle();
 
-        void SetDelayTimer(unsigned char timer);
-        unsigned char GetDelayTimer();
-        unsigned char GetSoundTimer();
+        unsigned short GetIndexRegister() const;
+        void SetIndexRegister(unsigned short index_register);
+        unsigned short GetProgramCounter() const;
+        void SetProgramCounter(unsigned short program_counter);
+        unsigned char GetStackPointer() const;
+        void SetStackPointer(unsigned char stack_pointer);
+        unsigned char GetDelayTimer() const;
+        void SetDelayTimer(unsigned char delay_timer);
+        unsigned char GetSoundTimer() const;
+        void SetSoundTimer(unsigned char sound_timer);
         void SetCpuRegister(int index, unsigned char value);
         unsigned char GetCpuRegister(int i);
         unsigned short GetStack(int i);
-        unsigned char GetStackPointer();
-        unsigned short GetProgramCounter();
-        void SetIndexRegister(unsigned short i);
-        unsigned short GetIndexRegister();
         void WriteToMemory(int index, unsigned char value);
     };
 }

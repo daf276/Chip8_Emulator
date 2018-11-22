@@ -8,7 +8,7 @@
 #include "Chip8.h"
 
 TEST_CASE("Call subroutine") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
 
     parenttest.WriteToMemory(0x200, 0x28);
     parenttest.WriteToMemory(0x201, 0x54);
@@ -20,8 +20,25 @@ TEST_CASE("Call subroutine") {
     REQUIRE(1 == parenttest.GetStackPointer());
 }
 
+TEST_CASE("Return from subroutine") {
+    Emulator::Chip8 parenttest;
+
+    parenttest.WriteToMemory(0x200, 0x28);
+    parenttest.WriteToMemory(0x201, 0x54);
+
+    parenttest.WriteToMemory(0x854, 0x00);
+    parenttest.WriteToMemory(0x855, 0xEE);
+
+    parenttest.EmulateCycle();
+    parenttest.EmulateCycle();
+
+    REQUIRE(0x202 == parenttest.GetProgramCounter());
+    REQUIRE(0x0200 == parenttest.GetStack(0));
+    REQUIRE(0 == parenttest.GetStackPointer());
+}
+
 TEST_CASE("JUMP") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
 
     parenttest.WriteToMemory(0x200, 0x18);
     parenttest.WriteToMemory(0x201, 0x54);
@@ -32,7 +49,7 @@ TEST_CASE("JUMP") {
 }
 
 TEST_CASE("Skip instruction if register equals number") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
 
     parenttest.WriteToMemory(0x200, 0x38);
     parenttest.WriteToMemory(0x201, 0x54);
@@ -43,7 +60,7 @@ TEST_CASE("Skip instruction if register equals number") {
 
     REQUIRE(0x0204 == parenttest.GetProgramCounter());
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
 
     parenttest2.WriteToMemory(0x200, 0x38);
     parenttest2.WriteToMemory(0x201, 0x54);
@@ -56,7 +73,7 @@ TEST_CASE("Skip instruction if register equals number") {
 }
 
 TEST_CASE("Skip instruction if register doesnt equal number") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
 
     parenttest.WriteToMemory(0x200, 0x48);
     parenttest.WriteToMemory(0x201, 0x54);
@@ -67,7 +84,7 @@ TEST_CASE("Skip instruction if register doesnt equal number") {
 
     REQUIRE(0x0202 == parenttest.GetProgramCounter());
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
 
     parenttest2.WriteToMemory(0x200, 0x48);
     parenttest2.WriteToMemory(0x201, 0x54);
@@ -80,7 +97,7 @@ TEST_CASE("Skip instruction if register doesnt equal number") {
 }
 
 TEST_CASE("Skip instruction if register equals other register") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
 
     parenttest.WriteToMemory(0x200, 0x58);
     parenttest.WriteToMemory(0x201, 0x50);
@@ -92,7 +109,7 @@ TEST_CASE("Skip instruction if register equals other register") {
 
     REQUIRE(0x0204 == parenttest.GetProgramCounter());
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
 
     parenttest2.WriteToMemory(0x200, 0x58);
     parenttest2.WriteToMemory(0x201, 0x50);
@@ -106,7 +123,7 @@ TEST_CASE("Skip instruction if register equals other register") {
 }
 
 TEST_CASE("load constant into register") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
 
     parenttest.WriteToMemory(0x200, 0x61);
     parenttest.WriteToMemory(0x201, 0x05);
@@ -117,7 +134,7 @@ TEST_CASE("load constant into register") {
 }
 
 TEST_CASE("add constant to register") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 5);
 
     parenttest.WriteToMemory(0x200, 0x71);
@@ -129,7 +146,7 @@ TEST_CASE("add constant to register") {
 }
 
 TEST_CASE("set register x to value y") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 4);
     parenttest.SetCpuRegister(2, 7);
 
@@ -142,7 +159,7 @@ TEST_CASE("set register x to value y") {
 }
 
 TEST_CASE("or register x and y") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 0b0001);
     parenttest.SetCpuRegister(2, 0b1100);
 
@@ -155,7 +172,7 @@ TEST_CASE("or register x and y") {
 }
 
 TEST_CASE("and register x and y") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 0b0011);
     parenttest.SetCpuRegister(2, 0b1010);
 
@@ -168,7 +185,7 @@ TEST_CASE("and register x and y") {
 }
 
 TEST_CASE("xor register x and y") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 0b0011);
     parenttest.SetCpuRegister(2, 0b1010);
 
@@ -181,7 +198,7 @@ TEST_CASE("xor register x and y") {
 }
 
 TEST_CASE("add register x and y") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 5);
     parenttest.SetCpuRegister(2, 6);
 
@@ -193,7 +210,7 @@ TEST_CASE("add register x and y") {
     REQUIRE(11 == parenttest.GetCpuRegister(1));
     REQUIRE(0 == parenttest.GetCpuRegister(15));
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
     parenttest2.SetCpuRegister(1, 240);
     parenttest2.SetCpuRegister(2, 100);
 
@@ -207,7 +224,7 @@ TEST_CASE("add register x and y") {
 }
 
 TEST_CASE("sub register x and y") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 7);
     parenttest.SetCpuRegister(2, 2);
 
@@ -219,7 +236,7 @@ TEST_CASE("sub register x and y") {
     REQUIRE(5 == parenttest.GetCpuRegister(1));
     REQUIRE(1 == parenttest.GetCpuRegister(15));
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
     parenttest2.SetCpuRegister(1, 5);
     parenttest2.SetCpuRegister(2, 7);
 
@@ -233,7 +250,7 @@ TEST_CASE("sub register x and y") {
 }
 
 TEST_CASE("shr register x") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 0b0110);
 
     parenttest.WriteToMemory(0x200, 0x81);
@@ -244,7 +261,7 @@ TEST_CASE("shr register x") {
     REQUIRE(3 == parenttest.GetCpuRegister(1));
     REQUIRE(0 == parenttest.GetCpuRegister(15));
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
     parenttest2.SetCpuRegister(1, 0b1111);
 
     parenttest2.WriteToMemory(0x200, 0x81);
@@ -257,7 +274,7 @@ TEST_CASE("shr register x") {
 }
 
 TEST_CASE("subn register x and y") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 2);
     parenttest.SetCpuRegister(2, 7);
 
@@ -269,7 +286,7 @@ TEST_CASE("subn register x and y") {
     REQUIRE(5 == parenttest.GetCpuRegister(1));
     REQUIRE(1 == parenttest.GetCpuRegister(15));
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
     parenttest2.SetCpuRegister(1, 7);
     parenttest2.SetCpuRegister(2, 5);
 
@@ -283,7 +300,7 @@ TEST_CASE("subn register x and y") {
 }
 
 TEST_CASE("shl register x") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.SetCpuRegister(1, 0b0010);
 
     parenttest.WriteToMemory(0x200, 0x81);
@@ -294,7 +311,7 @@ TEST_CASE("shl register x") {
     REQUIRE(4 == parenttest.GetCpuRegister(1));
     REQUIRE(0 == parenttest.GetCpuRegister(15));
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
     parenttest2.SetCpuRegister(1, 0b10000010);
 
     parenttest2.WriteToMemory(0x200, 0x81);
@@ -307,7 +324,7 @@ TEST_CASE("shl register x") {
 }
 
 TEST_CASE("skip instruction if register doesnt equal other register") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0x98);
     parenttest.WriteToMemory(0x201, 0x50);
 
@@ -318,7 +335,7 @@ TEST_CASE("skip instruction if register doesnt equal other register") {
 
     REQUIRE(0x204 == parenttest.GetProgramCounter());
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
     parenttest2.WriteToMemory(0x200, 0x98);
     parenttest2.WriteToMemory(0x201, 0x50);
 
@@ -331,7 +348,7 @@ TEST_CASE("skip instruction if register doesnt equal other register") {
 }
 
 TEST_CASE("set index register") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xA5);
     parenttest.WriteToMemory(0x201, 0x53);
 
@@ -341,7 +358,7 @@ TEST_CASE("set index register") {
 }
 
 TEST_CASE("jump to V0 plus constant") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xB5);
     parenttest.WriteToMemory(0x201, 0x53);
 
@@ -352,7 +369,7 @@ TEST_CASE("jump to V0 plus constant") {
 }
 
 TEST_CASE("Skip instruction if key is pressed") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xE5);
     parenttest.WriteToMemory(0x201, 0x9E);
 
@@ -361,7 +378,7 @@ TEST_CASE("Skip instruction if key is pressed") {
 
     REQUIRE(0x204 == parenttest.GetProgramCounter());
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
     parenttest2.WriteToMemory(0x200, 0xE5);
     parenttest2.WriteToMemory(0x201, 0x9E);
 
@@ -372,7 +389,7 @@ TEST_CASE("Skip instruction if key is pressed") {
 }
 
 TEST_CASE("Skip instruction if key is not pressed") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xE5);
     parenttest.WriteToMemory(0x201, 0xA1);
 
@@ -381,7 +398,7 @@ TEST_CASE("Skip instruction if key is not pressed") {
 
     REQUIRE(0x204 == parenttest.GetProgramCounter());
 
-    Emulator::Chip8 parenttest2("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest2;
     parenttest2.WriteToMemory(0x200, 0xE5);
     parenttest2.WriteToMemory(0x201, 0xA1);
 
@@ -392,7 +409,7 @@ TEST_CASE("Skip instruction if key is not pressed") {
 }
 
 TEST_CASE("Load delay timer into register") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xF0);
     parenttest.WriteToMemory(0x201, 0x07);
     parenttest.SetDelayTimer(5);
@@ -403,7 +420,7 @@ TEST_CASE("Load delay timer into register") {
 }
 
 TEST_CASE("Load register into delay timer") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xF5);
     parenttest.WriteToMemory(0x201, 0x15);
     parenttest.SetCpuRegister(5,12);
@@ -414,7 +431,7 @@ TEST_CASE("Load register into delay timer") {
 }
 
 TEST_CASE("Load register into sound timer") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xF5);
     parenttest.WriteToMemory(0x201, 0x18);
     parenttest.SetCpuRegister(5,12);
@@ -425,7 +442,7 @@ TEST_CASE("Load register into sound timer") {
 }
 
 TEST_CASE("Set index register equal to index register + register x") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xF5);
     parenttest.WriteToMemory(0x201, 0x1E);
     parenttest.SetCpuRegister(5,12);
@@ -436,8 +453,18 @@ TEST_CASE("Set index register equal to index register + register x") {
     REQUIRE(parenttest.GetIndexRegister() == 34);
 }
 
+TEST_CASE("Set index register to sprite location") {
+    Emulator::Chip8 parenttest;
+    parenttest.WriteToMemory(0x200, 0xF5);
+    parenttest.WriteToMemory(0x201, 0x29);
+
+    parenttest.EmulateCycle();
+
+    REQUIRE(parenttest.GetIndexRegister() == 25);
+}
+
 TEST_CASE("Go to next instruction if any key is pressed") {
-    Emulator::Chip8 parenttest("Unit Test, supress error", nullptr);
+    Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xF0);
     parenttest.WriteToMemory(0x201, 0x01);
 

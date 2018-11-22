@@ -43,7 +43,7 @@ int main(int argc, char const *argv[]) {
         auto * pixels = new int[64*32];
         memset(pixels, 0, 64*32* sizeof(int));
 
-        Emulator::Chip8 chip8("../PONG", pixels);
+        Emulator::Chip8 chip8("../PONG");
 
         //While application is running
         while (!quit) {
