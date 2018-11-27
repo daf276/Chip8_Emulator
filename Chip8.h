@@ -81,9 +81,9 @@ namespace Emulator {
         void OpCodeFx0x();
         void OpCodeFx1x();
         void LoadFontLocationIntoIndexRegister();
-        void OpCodeFx3x();
-        void OpCodeFx5x();
-        void OpCodeFx6x();
+        void StoreBCDInMemory();
+        void LoadRegistersIntoMemory();
+        void LoadMemoryIntoRegisters();
 
     public:
         Chip8();

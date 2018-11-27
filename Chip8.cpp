@@ -37,12 +37,7 @@ namespace Emulator {
         (this->*opcode_table[(opcode & 0xF000) >> 12])();
 
         // TODO Fully implement timers
-        /*if (delay_timer > 0)
-            --delay_timer;
-
-        if (sound_timer > 0)
-            if(sound_timer == 1);
-        --sound_timer;*/
+        if (delay_timer > 0) delay_timer--;
     }
 
     void Chip8::PopulateOpCodeTables() {
@@ -58,8 +53,8 @@ namespace Emulator {
                          &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid, &Chip8::OpCodeInvalid,
                          &Chip8::SHLRegisterX, &Chip8::OpCodeInvalid};
 
-        opcodeF_table = {&Chip8::OpCodeFx0x, &Chip8::OpCodeFx1x, &Chip8::LoadFontLocationIntoIndexRegister, &Chip8::OpCodeFx3x,
-                         &Chip8::OpCodeInvalid, &Chip8::OpCodeFx5x, &Chip8::OpCodeFx6x};
+        opcodeF_table = {&Chip8::OpCodeFx0x, &Chip8::OpCodeFx1x, &Chip8::LoadFontLocationIntoIndexRegister, &Chip8::StoreBCDInMemory,
+                         &Chip8::OpCodeInvalid, &Chip8::LoadRegistersIntoMemory, &Chip8::LoadMemoryIntoRegisters};
     }
 
     void Chip8::OpCodeInvalid() {
@@ -249,16 +244,26 @@ namespace Emulator {
         SetPCToNextInstruction();
     }
 
-    void Chip8::OpCodeFx3x() {
-
+    void Chip8::StoreBCDInMemory() { //LD B, Vx
+        unsigned char number = v[(opcode & 0x0F00) >> 8];
+        memory[index_register] = number/100;
+        memory[index_register+1] = (number/10) % 10;
+        memory[index_register+2] = (number % 100) % 10;
+        SetPCToNextInstruction();
     }
 
-    void Chip8::OpCodeFx5x() {
-
+    void Chip8::LoadRegistersIntoMemory() { //LD [I], Vx
+        for(int i = 0; i < 16; i++){
+            memory[index_register+i] = v[i];
+        }
+        SetPCToNextInstruction();
     }
 
-    void Chip8::OpCodeFx6x() {
-
+    void Chip8::LoadMemoryIntoRegisters() { //LD Vx, [I]
+        for(int i = 0; i < 16; i++){
+            v[i] = memory[index_register+i];
+        }
+        SetPCToNextInstruction();
     }
 
     void Chip8::SetPCToNextInstruction() {
