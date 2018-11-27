@@ -4,12 +4,34 @@
 #include "Chip8.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
+#include <algorithm>
+#include <thread>
 
 const int SCREEN_WIDTH = 64*16;
 const int SCREEN_HEIGHT = 32*16;
 
 bool init();
 void close();
+
+// Keypad keymap
+uint8_t keymap[16] = {
+        SDLK_x,
+        SDLK_1,
+        SDLK_2,
+        SDLK_3,
+        SDLK_q,
+        SDLK_w,
+        SDLK_e,
+        SDLK_a,
+        SDLK_s,
+        SDLK_d,
+        SDLK_y,
+        SDLK_c,
+        SDLK_4,
+        SDLK_r,
+        SDLK_f,
+        SDLK_v,
+};
 
 //The window we'll be rendering to
 SDL_Window *gWindow = NULL;
@@ -47,12 +69,28 @@ int main(int argc, char const *argv[]) {
         //While application is running
         while (!quit) {
 
+            //for (auto &&i : chip8.key_pressed) {
+            //    i = false;
+            //}
+
             //Handle events on queue
             while (SDL_PollEvent(&e) != 0) {
                 if (e.type == SDL_QUIT) {
                     quit = true;
-                } else if (e.type == SDL_KEYDOWN) {
-
+                }
+                if (e.type == SDL_KEYDOWN) {
+                    for (int i = 0; i < 16; ++i) {
+                        if (e.key.keysym.sym == keymap[i]) {
+                            chip8.key_pressed[i] = 1;
+                        }
+                    }
+                }
+                if (e.type == SDL_KEYUP) {
+                    for (int i = 0; i < 16; ++i) {
+                        if (e.key.keysym.sym == keymap[i]) {
+                            chip8.key_pressed[i] = 0;
+                        }
+                    }
                 }
             }
 
@@ -75,6 +113,8 @@ int main(int argc, char const *argv[]) {
 
             //Update the surface
             SDL_UpdateWindowSurface(gWindow);
+
+            std::this_thread::sleep_for(std::chrono::microseconds(1200));
         }
 
         SDL_DestroyTexture(texture);

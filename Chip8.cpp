@@ -202,18 +202,17 @@ namespace Emulator {
         SetPCToNextInstruction();
     }
 
-    //TODO actually implement key presses
-    void Chip8::OpCodeE() { //Skip next instruction depending on key state
-        if ((opcode & 0x00FF) == 0x009E) { //SKP Vx
-            if (key_pressed[(opcode & 0x0F00) >> 8]) SetPCToSkipNextInstruction();
+    void Chip8::OpCodeE() { //Opcode EXXX -> Skip next instruction depending on key state
+        if ((opcode & 0x00FF) == 0x009E) { //Opcode EX9E -> SKP Vx
+            if (key_pressed[v[(opcode & 0x0F00) >> 8]]) SetPCToSkipNextInstruction();
             else SetPCToNextInstruction();
-        } else if ((opcode & 0x00FF) == 0x00A1) { //SKNP Vx
-            if (!key_pressed[(opcode & 0x0F00) >> 8]) SetPCToSkipNextInstruction();
+        } else if ((opcode & 0x00FF) == 0x00A1) { //Opcode EXA1 -> SKNP Vx
+            if (!key_pressed[v[(opcode & 0x0F00) >> 8]]) SetPCToSkipNextInstruction();
             else SetPCToNextInstruction();
         }
     }
 
-    void Chip8::OpCodeF() {
+    void Chip8::OpCodeF() { //Opcode FXXX
         (this->*opcodeF_table[(opcode & 0x00F0) >> 4])();
     }
 
@@ -222,8 +221,12 @@ namespace Emulator {
             v[(opcode & 0x0F00) >> 8] = delay_timer;
             SetPCToNextInstruction();
         } else if ((opcode & 0x000F) == 0xA) { //LD Vx, K
-            if (std::any_of(key_pressed.begin(), key_pressed.end(), [](bool i) { return i; })) {
-                SetPCToNextInstruction();
+            for(int i = 0; i < 16; i++){
+                if(key_pressed[i]){
+                    v[(opcode & 0x0F00) >> 8] = i;
+                    SetPCToNextInstruction();
+                    break;
+                }
             }
         }
     }
@@ -253,14 +256,14 @@ namespace Emulator {
     }
 
     void Chip8::LoadRegistersIntoMemory() { //LD [I], Vx
-        for(int i = 0; i < 16; i++){
+        for(int i = 0; i <= v[(opcode & 0x0F00) >> 8]; i++){
             memory[index_register+i] = v[i];
         }
         SetPCToNextInstruction();
     }
 
     void Chip8::LoadMemoryIntoRegisters() { //LD Vx, [I]
-        for(int i = 0; i < 16; i++){
+        for(int i = 0; i <= v[(opcode & 0x0F00) >> 8]; i++){
             v[i] = memory[index_register+i];
         }
         SetPCToNextInstruction();
@@ -451,5 +454,9 @@ namespace Emulator {
 
     void Chip8::SetGfx(const std::vector<bool> &gfx) {
         Chip8::gfx = gfx;
+    }
+
+    unsigned char Chip8::GetMemory(int index) {
+        return memory[index];
     }
 }

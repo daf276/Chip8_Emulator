@@ -107,6 +107,7 @@ namespace Emulator {
         unsigned char GetCpuRegister(int i);
         unsigned short GetStack(int i);
         void WriteToMemory(int index, unsigned char value);
+        unsigned char GetMemory(int index);
     };
 }
 

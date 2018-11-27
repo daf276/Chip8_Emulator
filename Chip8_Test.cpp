@@ -7,19 +7,6 @@
 #include <catch2/catch.hpp>
 #include "Chip8.h"
 
-TEST_CASE("Call subroutine") {
-    Emulator::Chip8 parenttest;
-
-    parenttest.WriteToMemory(0x200, 0x28);
-    parenttest.WriteToMemory(0x201, 0x54);
-
-    parenttest.EmulateCycle();
-
-    REQUIRE(0x0854 == parenttest.GetProgramCounter());
-    REQUIRE(0x0200 == parenttest.GetStack(0));
-    REQUIRE(1 == parenttest.GetStackPointer());
-}
-
 TEST_CASE("Return from subroutine") {
     Emulator::Chip8 parenttest;
 
@@ -46,6 +33,19 @@ TEST_CASE("JUMP") {
     parenttest.EmulateCycle();
 
     REQUIRE(0x0854 == parenttest.GetProgramCounter());
+}
+
+TEST_CASE("Call subroutine") {
+    Emulator::Chip8 parenttest;
+
+    parenttest.WriteToMemory(0x200, 0x28);
+    parenttest.WriteToMemory(0x201, 0x54);
+
+    parenttest.EmulateCycle();
+
+    REQUIRE(0x0854 == parenttest.GetProgramCounter());
+    REQUIRE(0x0200 == parenttest.GetStack(0));
+    REQUIRE(1 == parenttest.GetStackPointer());
 }
 
 TEST_CASE("Skip instruction if register equals number") {
@@ -373,7 +373,7 @@ TEST_CASE("Skip instruction if key is pressed") {
     parenttest.WriteToMemory(0x200, 0xE5);
     parenttest.WriteToMemory(0x201, 0x9E);
 
-    parenttest.key_pressed[5] = true;
+    parenttest.key_pressed[parenttest.GetCpuRegister(5)] = true;
     parenttest.EmulateCycle();
 
     REQUIRE(0x204 == parenttest.GetProgramCounter());
@@ -382,7 +382,7 @@ TEST_CASE("Skip instruction if key is pressed") {
     parenttest2.WriteToMemory(0x200, 0xE5);
     parenttest2.WriteToMemory(0x201, 0x9E);
 
-    parenttest2.key_pressed[5] = false;
+    parenttest2.key_pressed[parenttest.GetCpuRegister(5)] = false;
     parenttest2.EmulateCycle();
 
     REQUIRE(0x202 == parenttest2.GetProgramCounter());
@@ -393,7 +393,7 @@ TEST_CASE("Skip instruction if key is not pressed") {
     parenttest.WriteToMemory(0x200, 0xE5);
     parenttest.WriteToMemory(0x201, 0xA1);
 
-    parenttest.key_pressed[5] = false;
+    parenttest.key_pressed[parenttest.GetCpuRegister(5)] = false;
     parenttest.EmulateCycle();
 
     REQUIRE(0x204 == parenttest.GetProgramCounter());
@@ -402,7 +402,7 @@ TEST_CASE("Skip instruction if key is not pressed") {
     parenttest2.WriteToMemory(0x200, 0xE5);
     parenttest2.WriteToMemory(0x201, 0xA1);
 
-    parenttest2.key_pressed[5] = true;
+    parenttest2.key_pressed[parenttest.GetCpuRegister(5)] = true;
     parenttest2.EmulateCycle();
 
     REQUIRE(0x202 == parenttest2.GetProgramCounter());
@@ -419,6 +419,23 @@ TEST_CASE("Load delay timer into register") {
     REQUIRE(parenttest.GetCpuRegister(0) == 5);
 }
 
+TEST_CASE("Set PC to next instruction if any key is pressed, save that key in register Vx") {
+    Emulator::Chip8 parenttest;
+    parenttest.WriteToMemory(0x200, 0xF3);
+    parenttest.WriteToMemory(0x201, 0x0A);
+
+    parenttest.EmulateCycle();
+
+    REQUIRE(parenttest.GetProgramCounter() == 0x200);
+
+    parenttest.key_pressed[5] = true;
+
+    parenttest.EmulateCycle();
+
+    REQUIRE(parenttest.GetProgramCounter() == 0x202);
+    REQUIRE(parenttest.GetCpuRegister(3) == 5);
+}
+
 TEST_CASE("Load register into delay timer") {
     Emulator::Chip8 parenttest;
     parenttest.WriteToMemory(0x200, 0xF5);
@@ -427,7 +444,7 @@ TEST_CASE("Load register into delay timer") {
 
     parenttest.EmulateCycle();
 
-    REQUIRE(parenttest.GetDelayTimer() == 12);
+    REQUIRE(parenttest.GetDelayTimer() == 11); //11 because the delay timer gets reduced by 1 after each instruction
 }
 
 TEST_CASE("Load register into sound timer") {
@@ -463,12 +480,52 @@ TEST_CASE("Set index register to sprite location") {
     REQUIRE(parenttest.GetIndexRegister() == 25);
 }
 
-TEST_CASE("Go to next instruction if any key is pressed") {
+TEST_CASE("Store BCD in memory") {
     Emulator::Chip8 parenttest;
-    parenttest.WriteToMemory(0x200, 0xF0);
-    parenttest.WriteToMemory(0x201, 0x01);
+    parenttest.WriteToMemory(0x200, 0xF5);
+    parenttest.WriteToMemory(0x201, 0x33);
+
+    parenttest.SetCpuRegister(5,234);
+    parenttest.EmulateCycle();
+
+    REQUIRE(parenttest.GetMemory(parenttest.GetIndexRegister()) == 2);
+    REQUIRE(parenttest.GetMemory(parenttest.GetIndexRegister()+1) == 3);
+    REQUIRE(parenttest.GetMemory(parenttest.GetIndexRegister()+2) == 4);
+}
+
+TEST_CASE("Store CPU registers in memory") {
+    Emulator::Chip8 parenttest;
+    parenttest.WriteToMemory(0x200, 0xF2);
+    parenttest.WriteToMemory(0x201, 0x55);
+
+    parenttest.SetIndexRegister(0x500);
+    parenttest.SetCpuRegister(0,234);
+    parenttest.SetCpuRegister(1,2);
+    parenttest.SetCpuRegister(2,35);
 
     parenttest.EmulateCycle();
 
-    REQUIRE(0x204 == parenttest.GetProgramCounter());
+    REQUIRE(parenttest.GetMemory(parenttest.GetIndexRegister()) == 234);
+    REQUIRE(parenttest.GetMemory(parenttest.GetIndexRegister()+1) == 2);
+    REQUIRE(parenttest.GetMemory(parenttest.GetIndexRegister()+2) == 35);
+}
+
+TEST_CASE("Store memory in CPU registers") {
+    Emulator::Chip8 parenttest;
+    parenttest.WriteToMemory(0x200, 0xF2);
+    parenttest.WriteToMemory(0x201, 0x65);
+
+    parenttest.SetIndexRegister(0x400);
+    parenttest.WriteToMemory(0x400,234);
+    parenttest.WriteToMemory(0x401,2);
+    parenttest.WriteToMemory(0x402,35);
+
+    parenttest.EmulateCycle();
+
+    for(int i = 0; i < 16; i++){
+        std::cout << static_cast<int>(parenttest.GetCpuRegister(i)) << std::endl;
+    }
+    REQUIRE(parenttest.GetCpuRegister(0) == 234);
+    REQUIRE(parenttest.GetCpuRegister(1) == 2);
+    REQUIRE(parenttest.GetCpuRegister(2) == 35);
 }
