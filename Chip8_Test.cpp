@@ -495,7 +495,7 @@ TEST_CASE("Store BCD in memory") {
 
 TEST_CASE("Store CPU registers in memory") {
     Emulator::Chip8 parenttest;
-    parenttest.WriteToMemory(0x200, 0xF2);
+    parenttest.WriteToMemory(0x200, 0xF3);
     parenttest.WriteToMemory(0x201, 0x55);
 
     parenttest.SetIndexRegister(0x500);
@@ -522,9 +522,6 @@ TEST_CASE("Store memory in CPU registers") {
 
     parenttest.EmulateCycle();
 
-    for(int i = 0; i < 16; i++){
-        std::cout << static_cast<int>(parenttest.GetCpuRegister(i)) << std::endl;
-    }
     REQUIRE(parenttest.GetCpuRegister(0) == 234);
     REQUIRE(parenttest.GetCpuRegister(1) == 2);
     REQUIRE(parenttest.GetCpuRegister(2) == 35);

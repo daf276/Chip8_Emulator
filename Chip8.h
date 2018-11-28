@@ -23,12 +23,6 @@ namespace Emulator {
         std::vector<void (Chip8::*)()> opcodeF_table;
 
         std::vector<bool> gfx;
-    public:
-        const std::vector<bool> &GetGfx() const;
-
-        void SetGfx(const std::vector<bool> &gfx);
-
-    private:
         std::vector<unsigned char> memory; //4096 bits of memory
         std::vector<unsigned char> v; //CPU registers named V0 to VE, last register is the carry flag
         std::vector<unsigned short> stack; //16 Stacklevels
@@ -86,13 +80,15 @@ namespace Emulator {
         void LoadMemoryIntoRegisters();
 
     public:
+        std::vector<bool> key_pressed;
+
         Chip8();
         explicit Chip8(std::string path);
 
-        std::vector<bool> key_pressed;
-
         void EmulateCycle();
 
+        const std::vector<bool> &GetGfx() const;
+        void SetGfx(const std::vector<bool> &gfx);
         unsigned short GetIndexRegister() const;
         void SetIndexRegister(unsigned short index_register);
         unsigned short GetProgramCounter() const;

@@ -242,12 +242,12 @@ namespace Emulator {
         SetPCToNextInstruction();
     }
 
-    void Chip8::LoadFontLocationIntoIndexRegister() { //LD F, Vx
+    void Chip8::LoadFontLocationIntoIndexRegister() { //Opcode Fx29-> LD F, Vx
         index_register = ((opcode & 0x0F00) >> 8) * 5;
         SetPCToNextInstruction();
     }
 
-    void Chip8::StoreBCDInMemory() { //LD B, Vx
+    void Chip8::StoreBCDInMemory() { //Opcode Fx33 -> LD B, Vx
         unsigned char number = v[(opcode & 0x0F00) >> 8];
         memory[index_register] = number/100;
         memory[index_register+1] = (number/10) % 10;
@@ -255,15 +255,15 @@ namespace Emulator {
         SetPCToNextInstruction();
     }
 
-    void Chip8::LoadRegistersIntoMemory() { //LD [I], Vx
-        for(int i = 0; i <= v[(opcode & 0x0F00) >> 8]; i++){
+    void Chip8::LoadRegistersIntoMemory() { //Opcode Fx55 -> LD [I], Vx
+        for(int i = 0; i <= (opcode & 0x0F00) >> 8; i++){
             memory[index_register+i] = v[i];
         }
         SetPCToNextInstruction();
     }
 
-    void Chip8::LoadMemoryIntoRegisters() { //LD Vx, [I]
-        for(int i = 0; i <= v[(opcode & 0x0F00) >> 8]; i++){
+    void Chip8::LoadMemoryIntoRegisters() { //Opcode Fx65 -> LD Vx, [I]
+        for(int i = 0; i <= (opcode & 0x0F00) >> 8; i++){
             v[i] = memory[index_register+i];
         }
         SetPCToNextInstruction();

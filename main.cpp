@@ -69,10 +69,6 @@ int main(int argc, char const *argv[]) {
         //While application is running
         while (!quit) {
 
-            //for (auto &&i : chip8.key_pressed) {
-            //    i = false;
-            //}
-
             //Handle events on queue
             while (SDL_PollEvent(&e) != 0) {
                 if (e.type == SDL_QUIT) {
