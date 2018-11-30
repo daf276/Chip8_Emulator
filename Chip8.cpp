@@ -7,7 +7,7 @@
 
 namespace Emulator {
 
-    Chip8::Chip8() : memory(4096), v(16), stack(16), key_pressed(16), gfx(64*32), mt(new std::mt19937(std::random_device()())), dist(new std::uniform_real_distribution<double>(0.0, 255.0)){
+    Chip8::Chip8() : memory(4096), v(16), stack(16), key_pressed(16), gfx(32, std::vector<bool>(64)), mt(new std::mt19937(std::random_device()())), dist(new std::uniform_real_distribution<double>(0.0, 255.0)){
         PopulateOpCodeTables();
         LoadHexDigitSpriteIntoMemory();
 
@@ -63,7 +63,11 @@ namespace Emulator {
 
     void Chip8::OpCodeZero() {//Opcodes 0XXX
         if (opcode == 0x00E0) { //CLS
-            std::fill(gfx.begin(), gfx.end(), 0);
+            for (auto &i : gfx) {
+                for (auto &&j : i) {
+                    j = false;
+                }
+            }
         } else if (opcode == 0x00EE) { //RET
             stack_pointer--;
             program_counter = stack[stack_pointer];
@@ -180,23 +184,30 @@ namespace Emulator {
         SetPCToNextInstruction();
     }
 
+    //TODO check if pixels get erased
+    //TODO investigate weird flickering
     void Chip8::DisplaySprite() { //Opcode DXXX -> DRW Vx, Vy, nibble
+        int number_of_bytes = opcode & 0x000F;
+        int x = v[(opcode & 0x0F00) >> 8];
+        int y = v[(opcode & 0x00F0) >> 4];
 
-        unsigned char number_of_bytes = static_cast<unsigned char>(opcode & 0x000F);
-        unsigned char x = v[(opcode & 0x0F00) >> 8];
-        unsigned char y = v[(opcode & 0x00F0) >> 4];
+        std::vector<int> bitmask = {128, 64, 32, 16, 8, 4, 2, 1};
+        std::vector<int> x_pos(8);
+
+        //For horizontal display wrap around
+        for (int i = 0; i < 8; i++) {
+            if(x+i < 64) x_pos[i] = x+i;
+            else x_pos[i] = x+i-64;
+        }
 
         for (int i = 0; i < number_of_bytes; ++i) {
             unsigned char row_of_pixels = memory[index_register + i];
 
-            gfx[64 * (y + i) + x] = ((row_of_pixels & 128) > 0) ^ gfx[64 * (y + i) + x];
-            gfx[64 * (y + i) + x + 1] = ((row_of_pixels & 64) > 0) ^ gfx[64 * (y + i) + x + 1];
-            gfx[64 * (y + i) + x + 2] = ((row_of_pixels & 32) > 0) ^ gfx[64 * (y + i) + x + 2];
-            gfx[64 * (y + i) + x + 3] = ((row_of_pixels & 16) > 0) ^ gfx[64 * (y + i) + x + 3];
-            gfx[64 * (y + i) + x + 4] = ((row_of_pixels & 8) > 0) ^ gfx[64 * (y + i) + x + 4];
-            gfx[64 * (y + i) + x + 5] = ((row_of_pixels & 4) > 0) ^ gfx[64 * (y + i) + x + 5];
-            gfx[64 * (y + i) + x + 6] = ((row_of_pixels & 2) > 0) ^ gfx[64 * (y + i) + x + 6];
-            gfx[64 * (y + i) + x + 7] = ((row_of_pixels & 1) > 0) ^ gfx[64 * (y + i) + x + 7];
+            if(y+i >= 32) y = -i; //For vertical display wrap around
+
+            for (int j = 0; j < 8; ++j) {
+                gfx[y+i][x_pos[j]] = ((row_of_pixels & bitmask[j]) > 0) ^ gfx[y+i][x_pos[j]];
+            }
         }
 
         SetPCToNextInstruction();
@@ -448,12 +459,8 @@ namespace Emulator {
         Chip8::sound_timer = sound_timer;
     }
 
-    const std::vector<bool> &Chip8::GetGfx() const {
+    const std::vector<std::vector<bool>> &Chip8::GetGfx() const {
         return gfx;
-    }
-
-    void Chip8::SetGfx(const std::vector<bool> &gfx) {
-        Chip8::gfx = gfx;
     }
 
     unsigned char Chip8::GetMemory(int index) {

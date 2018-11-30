@@ -1,7 +1,3 @@
-//
-// Created by attila on 31.08.18.
-//
-
 #ifndef CHIP8_EMULATOR_C_CHIP8_H
 #define CHIP8_EMULATOR_C_CHIP8_H
 
@@ -22,7 +18,7 @@ namespace Emulator {
         std::vector<void (Chip8::*)()> opcode8_table;
         std::vector<void (Chip8::*)()> opcodeF_table;
 
-        std::vector<bool> gfx;
+        std::vector<std::vector<bool>> gfx; //64*32 Pixel screen
         std::vector<unsigned char> memory; //4096 bits of memory
         std::vector<unsigned char> v; //CPU registers named V0 to VE, last register is the carry flag
         std::vector<unsigned short> stack; //16 Stacklevels
@@ -87,8 +83,7 @@ namespace Emulator {
 
         void EmulateCycle();
 
-        const std::vector<bool> &GetGfx() const;
-        void SetGfx(const std::vector<bool> &gfx);
+        const std::vector<std::vector<bool>> &GetGfx() const;
         unsigned short GetIndexRegister() const;
         void SetIndexRegister(unsigned short index_register);
         unsigned short GetProgramCounter() const;

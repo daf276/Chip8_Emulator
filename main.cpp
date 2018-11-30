@@ -92,11 +92,13 @@ int main(int argc, char const *argv[]) {
 
             chip8.EmulateCycle();
 
-            std::vector<bool> gfx = chip8.GetGfx();
+            std::vector<std::vector<bool>> gfx = chip8.GetGfx();
 
-            for (int i = 0; i < 2048; ++i) {
-                uint32_t pixel = gfx[i];
-                pixels[i] = (0x00FFFFFF * pixel) | 0xFF000000;
+            for (int i = 0; i < 32; ++i) {
+                for (int j = 0; j < 64; ++j) {
+                    uint32_t pixel = gfx[i][j];
+                    pixels[i*64+j] = (0x00FFFFFF * pixel) | 0xFF000000;
+                }
             }
 
             SDL_UpdateTexture(texture, NULL, pixels, 64 * sizeof(int));
