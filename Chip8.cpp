@@ -31,8 +31,7 @@ namespace Emulator {
 
     void Chip8::EmulateCycle() {
         opcode = memory[program_counter] << 8 | memory[program_counter + 1];
-        std::cout << std::hex << std::uppercase << opcode << std::endl;
-
+        
         //Call function on opcode_table where the index equals the first hex digit of the opcode
         (this->*opcode_table[(opcode & 0xF000) >> 12])();
 
