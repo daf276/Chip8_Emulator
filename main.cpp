@@ -64,7 +64,7 @@ int main(int argc, char const *argv[]) {
 
         SDL_Texture * texture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, 64, 32);
 
-        Emulator::Chip8 chip8("../PONG");
+        Emulator::Chip8 chip8("../TICTAC");
 
         //While application is running
         while (!quit) {

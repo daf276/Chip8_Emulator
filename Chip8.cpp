@@ -107,12 +107,12 @@ namespace Emulator {
     }
 
     void Chip8::LoadConstantIntoRegister() { //Opcode 6XXX -> LD Vx, byte
-        v[(opcode & 0x0F00) >> 8] = opcode & 0x00FF; //Casting gives the 2 LSBs, aka the constant
+        v[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
         SetPCToNextInstruction();
     }
 
     void Chip8::AddConstantToRegister() { //Opcode 7XXX -> ADD Vx, byte
-        v[(opcode & 0x0F00) >> 8] += opcode & 0x00FF; //Casting gives the 2 LSBs, aka the constant
+        v[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
         SetPCToNextInstruction();
     }
 
@@ -184,8 +184,6 @@ namespace Emulator {
         SetPCToNextInstruction();
     }
 
-    //TODO check if pixels get erased
-    //TODO investigate weird flickering
     void Chip8::DisplaySprite() { //Opcode DXXX -> DRW Vx, Vy, nibble
         int number_of_bytes = opcode & 0x000F;
         int x = v[(opcode & 0x0F00) >> 8];
@@ -193,6 +191,9 @@ namespace Emulator {
 
         std::vector<int> bitmask = {128, 64, 32, 16, 8, 4, 2, 1};
         std::vector<int> x_pos(8);
+
+        //Init overflow register as 0
+        v[15] = 0;
 
         //For horizontal display wrap around
         for (int i = 0; i < 8; i++) {
@@ -206,6 +207,7 @@ namespace Emulator {
             if(y+i >= 32) y = -i; //For vertical display wrap around
 
             for (int j = 0; j < 8; ++j) {
+                if(v[15] != 1 && (row_of_pixels & bitmask[j]) > 0 && gfx[y+i][x_pos[j]]) v[15] = 1;
                 gfx[y+i][x_pos[j]] = ((row_of_pixels & bitmask[j]) > 0) ^ gfx[y+i][x_pos[j]];
             }
         }
@@ -214,7 +216,7 @@ namespace Emulator {
     }
 
     void Chip8::OpCodeE() { //Opcode EXXX -> Skip next instruction depending on key state
-        if ((opcode & 0x00FF) == 0x009E) { //Opcode EX9E -> SKP Vx
+        if ((opcode & 0x00FF) == 0x009E) { //qq1r4q1q1raqOpcode EX9E -> SKP Vx
             if (key_pressed[v[(opcode & 0x0F00) >> 8]]) SetPCToSkipNextInstruction();
             else SetPCToNextInstruction();
         } else if ((opcode & 0x00FF) == 0x00A1) { //Opcode EXA1 -> SKNP Vx
@@ -254,7 +256,7 @@ namespace Emulator {
     }
 
     void Chip8::LoadFontLocationIntoIndexRegister() { //Opcode Fx29-> LD F, Vx
-        index_register = ((opcode & 0x0F00) >> 8) * 5;
+        index_register = v[((opcode & 0x0F00) >> 8)] * 5;
         SetPCToNextInstruction();
     }
 
@@ -267,14 +269,14 @@ namespace Emulator {
     }
 
     void Chip8::LoadRegistersIntoMemory() { //Opcode Fx55 -> LD [I], Vx
-        for(int i = 0; i <= (opcode & 0x0F00) >> 8; i++){
+        for(int i = 0; i <= ((opcode & 0x0F00) >> 8); i++){
             memory[index_register+i] = v[i];
         }
         SetPCToNextInstruction();
     }
 
     void Chip8::LoadMemoryIntoRegisters() { //Opcode Fx65 -> LD Vx, [I]
-        for(int i = 0; i <= (opcode & 0x0F00) >> 8; i++){
+        for(int i = 0; i <= ((opcode & 0x0F00) >> 8); i++){
             v[i] = memory[index_register+i];
         }
         SetPCToNextInstruction();

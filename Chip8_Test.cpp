@@ -475,6 +475,7 @@ TEST_CASE("Set index register to sprite location") {
     parenttest.WriteToMemory(0x200, 0xF5);
     parenttest.WriteToMemory(0x201, 0x29);
 
+    parenttest.SetCpuRegister(5,5);
     parenttest.EmulateCycle();
 
     REQUIRE(parenttest.GetIndexRegister() == 25);
